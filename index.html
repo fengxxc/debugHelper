@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>log4j-sql-debug-Helper</title>
+	<style>
+		html, body, #main{
+			height: 100%;
+			/*line-height: 100%;*/
+			margin: 0;
+			padding: 0;
+
+		}
+		p{
+			margin: 0;
+			padding: 0;
+		}
+		#inputArea,#outputArea{
+			display: inline-block;
+			width: 45%;
+			/*height: 100%;*/
+			height: 100%;
+		}
+		#outputArea{
+			padding: 0 5px;
+			border: 1px solid black;
+			overflow: auto;
+			color: #333;
+			/*font-size: 16px;*/
+			/*font-family: "微软雅黑";*/
+		}
+		#do-btn{
+			position: relative;
+			vertical-align: middle;
+			top: -50%;
+		}
+		/* 关键字样式 */
+		.space{
+			display: inline-block;
+			width: 1rem;
+		}
+		.key-word{
+			/*display: block;*/
+			color: #88F;
+		}
+		.indent1{
+			display: block;
+			padding-left: 1rem;
+		}
+	</style>
+</head>
+<body>
+	<div id="main">
+		<textarea id="inputArea"></textarea>
+		<button id="do-btn">转换=></button>
+		<div id="outputArea"></div>
+	</div>
+<script src="jquery-1.11.3.min.js"></script>
+<script>
+	var do_btn = document.getElementById('do-btn');
+	var outputArea = document.getElementById('outputArea');
+	do_btn.onclick = function () {
+		var sqlStr = document.getElementById('inputArea').value;
+		if (sqlStr == null || sqlStr == '') {return;}
+		var params = sqlStr.match(/Parameters: .*/)[0].replace(/Parameters: |\(String\)/g, '').split(', ');
+		// 替换所有问号
+		for (var i = 0; i < params.length; i++) {
+			sqlStr = sqlStr.replace(/\?/, "<mark>'"+params[i]+"'</mark>");
+		}
+		// 去掉多余的字符串
+		sqlStr = sqlStr.replace(/(\d{4}-\d{2}-\d{2}.*\: )|(\n\d{4}-\d{2}-\d{2}.*)/gm, '');
+		// 格式化
+		// sqlStr = sqlStr.replace(/select/gmi, '<span class="select">SELECT</span><p class="indent1">');
+		// sqlStr = sqlStr.replace(/from/gmi, '</p><span class="from">FROM</span>');
+		// sqlStr = sqlStr.replace(/left\s+join/gi, '<span class="left-join">LEFT JOIN</span>');
+		// sqlStr = sqlStr.replace(/where/gi, '<span class="where">WHERE</span>');
+		// sqlStr = sqlStr.replace(/\(/gi, '<br/>(');
+		// sqlStr = sqlStr.replace(/\)/gi, '<br/>)');
+
+		sqlRender(sqlStr);
+		
+
+		$('#outputArea').html( $('#outputArea').html().replace(/select/gmi, '<strong class="key-word">SELECT</strong>') );
+		$('#outputArea').html( $('#outputArea').html().replace(/from/gmi, '<strong class="key-word">FROM</strong>') );
+		$('#outputArea').html( $('#outputArea').html().replace(/left\s+join/gi, '<strong class="key-word">LEFT JOIN</strong>') );
+		$('#outputArea').html( $('#outputArea').html().replace(/where/gi, '<strong class="key-word">WHERE</strong>') );
+		$('#outputArea').html( $('#outputArea').html().replace(/order\s+by/gi, '<strong class="key-word">ORDER BY</strong>') );
+		$('#outputArea').html( $('#outputArea').html().replace(/and/gi, '<strong class="key-word">AND</strong>') );
+		$('#outputArea').html( $('#outputArea').html().replace(/\s+as\s+/gi, '<strong class="key-word"> AS </strong>') );
+		$('#outputArea').html( $('#outputArea').html().replace(/\s+on\s+/gi, '<strong class="key-word"> ON </strong>') );
+		$('#outputArea').html( $('#outputArea').html().replace(/\s+limit\s+/gi, '<strong class="key-word"> LIMIT </strong>') );
+		$('#outputArea').html( $('#outputArea').html().replace(/\s+asc\s+/gi, '<strong class="key-word"> ASC </strong>') );
+		$('#outputArea').html( $('#outputArea').html().replace(/\s+desc\s+/gi, '<strong class="key-word"> DESC </strong>') );
+
+		// console.log(oFrom)
+
+		
+	}
+
+	/*$("#outputArea").on('dblclick', function () {
+		$(this).unwrap().wrap('<textarea id="" style="width:100%; heigth:100%">' + $(this).text() + '</textarea>t').select();
+	})*/
+
+	// 渲染sql
+	function sqlRender(oSql) {
+		oSql = sqlFormat(oSql);
+		// 换行
+		oSql = oSql.replace(/\(/gi, '(<br/><span class="indent1">');
+		oSql = oSql.replace(/\)/gi, '</span><br/>)');
+		oSql = oSql.replace(/,/gi, ',<br/>');
+		oSql = oSql.replace(/and/gi, '<br/>AND');
+		outputArea.innerHTML = oSql;
+
+		$(".indent1").each(function () {
+			// $(this).html(sqlFormat($(this).html()));
+			$(this).html( $(this).html().replace(/select/gmi, 'SELECT<br/>') );
+			$(this).html( $(this).html().replace(/from/gmi, '<br/>FROM<br/>') );
+			$(this).html( $(this).html().replace(/left\s+join/gmi, '<br/>LEFT JOIN<br/>') );
+			$(this).html( $(this).html().replace(/where/gmi, '<br/>WHERE<br/>') );
+		})
+	}
+	// 格式化sql
+	function sqlFormat(oSql) {
+		// 最外层格式化
+		if (oSql.match(/.*(?=FROM)/gi) == null) {
+			return oSql;
+		}
+		var oSelect = '';
+		// TODO
+		oSelect = oSql.match(/.*(?=FROM)/gi)[0].replace(/select/i, 'SELECT <p class="indent1">') + '</p>';
+		var froms = oSql.split(/from/gi);
+		var oFrom = 'FROM <p class="indent1">' + froms[froms.length-1].split(/where/gi)[0] + '</p>';
+		var owhere = '';
+		var oOrder = '';
+		if (froms[froms.length-1].split(/where/gi)[1].search(/order\s+by/gi) > 0) { // 如果有order by
+			console.log('have order')
+			owhere = 'WHERE <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1].split(/order\s+by/gi)[0] + '</p>';
+			oOrder = 'ORDER BY <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1].split(/order\s+by/gi)[1] + '</p>';
+		} else {
+			owhere = 'WHERE <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1] + '</p>';
+			
+		}
+
+		oSql = oSelect + oFrom + owhere + oOrder;
+		return oSql;
+	}
+</script>
+</body>
+</html>
+<!-- 
+2017-03-08 09:57 DEBUG b.getDyHgzPageList - ==>  Preparing: SELECT bm.id AS "bb_id", bm.user_id AS "bb_userId", bm.xm AS "bb_xm", bm.xb AS "bb_xb", (SELECT dictionary_name FROM sys_dictionary WHERE dictionary_code = bm.mz AND parent_dictionary_id = ( SELECT dictionary_id FROM sys_dictionary WHERE dictionary_no = ? ) ) As "bb_mz", bm.zjlx AS "bb_zjlx", bm.zjhm AS "bb_zjhm", bm.bmh AS "bb_bmh", bm.lsh AS "bb_lsh", bm.xydm AS "bb_xydm", bm.xymc AS "bb_xymc", bm.nfdm AS "bb_nfdm", bm.kddm AS "bb_kddm", bm.kdmc AS "bb_kdmc", bm.zydm AS "bb_zydm", bm.zymc AS "bb_zymc", bm.bmxh AS "bb_bmxh", bm.cym AS "bb_cym", bm.kl AS "bb_kl", bm.whcd AS "bb_whcd", bm.gkszd AS "bb_gkszd", bm.gkksh AS "bb_gkksh", bm.byxx AS "bb_byxx", bm.sj AS "bb_sj", bm.fqxm AS "bb_fqxm", bm.fqdw AS "bb_fqdw", bm.fqdh AS "bb_fqdh", bm.mqxm AS "bb_mqxm", bm.mqdw AS "bb_mqdw", bm.mqdh AS "bb_mqdh", bm.sjr AS "bb_sjr", bm.sjrdh AS "bb_sjrdh", bm.jtzz AS "bb_jtzz", bm.yb AS "bb_yb", bm.zp1 AS "bb_zp1", bm.zp2 AS "bb_zp2", bm.zp3 AS "bb_zp3", bm.yyqz AS "bb_yyqz", bm.ysqm AS "bb_ysqm", bm.sg AS "bb_sg", bm.tz AS "bb_tz", bm.csrq AS "bb_csrq", bm.gkgf AS "bb_gkgf", bm.wz AS "bb_wz", bm.ydydj AS "bb_ydydj", bm.qq AS "bb_qq", bm.ydycj AS "bb_ydycj", bm.qtydcj AS "bb_qtydcj", bm.jfzt AS "bb_jfzt", bm.shzt AS "bb_shzt", bm.shsj AS "bb_shsj", bm.shr AS "bb_shr", bm.shyj AS "bb_shyj", bm.jbxxshzt AS "bb_jbxxshzt", bm.jbxxshsj AS "bb_jbxxshsj", bm.jbxxshr AS "bb_jbxxshr", bm.jbxxshyj AS "bb_jbxxshyj", cjb.id AS "kc_id", cjb.bmh_id AS "kc_bmhId", cjb.sxh AS "kc_sxh", cjb.kslc AS "kc_kslc", cjb.kskm AS "kc_kskm", cjb.kscj AS "kc_kscj", cjb.sftg AS "kc_sftg", cjb.ksrq AS "kc_ksrq", cjb.kssj AS "kc_kssj", cjb.ksdd AS "kc_ksdd", cjb.lrr AS "kc_lrr", cjb.lrsj AS "kc_lrsj", zcjb.zcj AS "kz_zcj", zcjb.id AS "zcj_id", zcjb.bmh_id AS "kz_bmh_id", zcjb.sxh AS "kz_sxh", zcjb.xzh AS "kz_xzh", zcjb.xydm AS "kz_xydm", zcjb.nfdm AS "kz_nfdm", zcjb.zydm AS "kz_zydm", zcjb.kslc AS "kz_kslc", zcjb.zcj AS "kz_zcj", zcjb.sftg AS "kz_sftg", zcjb.sffb AS "kz_sffb", zcjb.sfdr AS "kz_sfdr" FROM bm_bmb bm left join ks_cjb cjb on bm.bmh = cjb.bmh_id left join ks_zcjb zcjb on bm.bmh = zcjb.bmh_Id WHERE 1=1 and zcjb.sftg = '1' and zcjb.sffb = '1' and bm.user_id like ? ORDER BY bb_xm desc LIMIT 0,30 
+2017-03-08 09:57 DEBUG b.getDyHgzPageList - ==> Parameters: mz_zd(String), 59e58da4-da29-11e6-9689-50af7326854d(String)
+2017-03-08 09:57 DEBUG b.getDyHgzPageList - <==      Total: 5
+ -->
