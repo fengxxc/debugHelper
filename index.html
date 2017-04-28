@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>log4j-sql-debug-Helper</title>
+	<title>Navimice</title>
 	<style>
 		html, body, #main{
 			height: 100%;
@@ -11,15 +11,11 @@
 			padding: 0;
 
 		}
-		p{
-			margin: 0;
-			padding: 0;
-		}
 		#inputArea,#outputArea{
 			display: inline-block;
 			width: 47%;
 			/*height: 100%;*/
-			height: 100%;
+			height: 98%;
 			box-sizing: border-box;
 		}
 		#outputArea{
@@ -37,6 +33,28 @@
 			width: 5%;
 			top: -50%;
 			box-sizing: border-box;
+			/*background-color: #9b59b6;
+			border: none;*/
+		}
+		#outputArea_hide{
+			/*display: none;*/
+			/*visibility: hidden;*/
+			position: absolute;
+			top: -200px;
+			left: -200px;
+			z-index: -100;
+		}
+		#copy-btn{
+			position: absolute;
+			right: 5px;
+			top: 5px;
+			background-color: #98F;
+			color: #FFF;
+			border: none;
+			opacity: 0.8;
+		}
+		#copy-btn:hover{
+			opacity: 1;
 		}
 		/* 关键字样式 */
 		.space{
@@ -57,12 +75,16 @@
 	<div id="main">
 		<textarea id="inputArea"></textarea>
 		<button id="do-btn">转换=></button>
+		<button id="copy-btn">copy到剪贴板</button>
 		<div id="outputArea"></div>
+		<textarea id="outputArea_hide" cols="0" rows="0"></textarea>
 	</div>
 <script src="jquery-1.11.3.min.js"></script>
 <script>
 	var do_btn = document.getElementById('do-btn');
+	var copy_btn = document.getElementById('copy-btn');
 	var outputArea = document.getElementById('outputArea');
+	var outputArea_hide = document.getElementById('outputArea_hide');
 	do_btn.onclick = function () {
 		var sqlStr = document.getElementById('inputArea').value;
 		if (sqlStr == null || sqlStr == '') {return;}
@@ -97,8 +119,6 @@
 		$('#outputArea').html( $('#outputArea').html().replace(/\s+desc\s+/gi, '<strong class="key-word"> DESC </strong>') );
 
 		// console.log(oFrom)
-
-		
 	}
 
 	/*$("#outputArea").on('dblclick', function () {
@@ -137,7 +157,6 @@
 		var owhere = '';
 		var oOrder = '';
 		if (froms[froms.length-1].split(/where/gi)[1].search(/order\s+by/gi) > 0) { // 如果有order by
-			console.log('have order')
 			owhere = 'WHERE <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1].split(/order\s+by/gi)[0] + '</p>';
 			oOrder = 'ORDER BY <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1].split(/order\s+by/gi)[1] + '</p>';
 		} else {
@@ -148,6 +167,31 @@
 		oSql = oSelect + oFrom + owhere + oOrder;
 		return oSql;
 	}
+
+	// 点击copy到剪贴板
+	copy_btn.onclick = function (e) {
+		if (outputArea.innerText == '') 
+			alert("啥也没有你让我复制个P丫 o(ﾟДﾟ)っ！"); return;
+
+		try {
+			outputArea_hide.value = outputArea.innerText;
+			outputArea_hide.select();
+			document.execCommand("copy",false,null);
+			alert("已复制到剪贴板 Ψ(￣∀￣)Ψ")
+		} catch(err) {
+			alert("copy到剪贴板失败，你的牛腩器好像不滋泚哦 ┓(;´_｀)┏")
+		}
+	}
+
+	// 鼠标移入结果区显示copy按钮
+	/*$('.right').on('mouseover mouseout', function (e) {
+		if (e.type == 'mouseover') {
+			$(copy_btn).show();
+		} else if (e.type == 'mouseout') {
+			$(copy_btn).hide();
+		}
+		
+	})*/
 </script>
 </body>
 </html>
