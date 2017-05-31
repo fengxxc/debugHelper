@@ -85,103 +85,115 @@
 	var copy_btn = document.getElementById('copy-btn');
 	var outputArea = document.getElementById('outputArea');
 	var outputArea_hide = document.getElementById('outputArea_hide');
+
 	do_btn.onclick = function () {
 		var sqlStr = document.getElementById('inputArea').value;
-		if (sqlStr == null || sqlStr == '') {return;}
-		var params = sqlStr.match(/Parameters: .*/)[0].replace(/Parameters: |\(String\)/g, '').split(', ');
-		// 替换所有问号
-		for (var i = 0; i < params.length; i++) {
-			sqlStr = sqlStr.replace(/\?/, "<mark>'"+params[i]+"'</mark>");
+		Navimice().start(sqlStr);
+	}
+	// 点击copy到剪贴板
+	copy_btn.onclick = function () {
+		Navimice().copySql();
+	}
+	var Navimice = function () {
+
+		// 开始
+		function start(sqlStr) {
+			if (!sqlStr) {return;}
+			var params = sqlStr.match(/Parameters: .*/)[0].replace(/Parameters: |\(String\)/g, '').split(', ');
+			// 替换所有问号
+			for (var i = 0; i < params.length; i++) {
+				sqlStr = sqlStr.replace(/\?/, "<mark>'"+params[i]+"'</mark>");
+			}
+			// 去掉多余的字符串
+			sqlStr = sqlStr.replace(/(\d{4}-\d{2}-\d{2}.*\: )|(\n\d{4}-\d{2}-\d{2}.*)/gm, '');
+			// 格式化
+			// sqlStr = sqlStr.replace(/select/gmi, '<span class="select">SELECT</span><p class="indent1">');
+			// sqlStr = sqlStr.replace(/from/gmi, '</p><span class="from">FROM</span>');
+			// sqlStr = sqlStr.replace(/left\s+join/gi, '<span class="left-join">LEFT JOIN</span>');
+			// sqlStr = sqlStr.replace(/where/gi, '<span class="where">WHERE</span>');
+			// sqlStr = sqlStr.replace(/\(/gi, '<br/>(');
+			// sqlStr = sqlStr.replace(/\)/gi, '<br/>)');
+
+			sqlRender(sqlStr);
+			
+
+			$('#outputArea').html( $('#outputArea').html().replace(/select/gmi, '<strong class="key-word">SELECT</strong>') );
+			$('#outputArea').html( $('#outputArea').html().replace(/from/gmi, '<strong class="key-word">FROM</strong>') );
+			$('#outputArea').html( $('#outputArea').html().replace(/left\s+join/gi, '<strong class="key-word">LEFT JOIN</strong>') );
+			$('#outputArea').html( $('#outputArea').html().replace(/where/gi, '<strong class="key-word">WHERE</strong>') );
+			$('#outputArea').html( $('#outputArea').html().replace(/order\s+by/gi, '<strong class="key-word">ORDER BY</strong>') );
+			$('#outputArea').html( $('#outputArea').html().replace(/and/gi, '<strong class="key-word">AND</strong>') );
+			$('#outputArea').html( $('#outputArea').html().replace(/\s+as\s+/gi, '<strong class="key-word"> AS </strong>') );
+			$('#outputArea').html( $('#outputArea').html().replace(/\s+on\s+/gi, '<strong class="key-word"> ON </strong>') );
+			$('#outputArea').html( $('#outputArea').html().replace(/\s+limit\s+/gi, '<strong class="key-word"> LIMIT </strong>') );
+			$('#outputArea').html( $('#outputArea').html().replace(/\s+asc\s+/gi, '<strong class="key-word"> ASC </strong>') );
+			$('#outputArea').html( $('#outputArea').html().replace(/\s+desc\s+/gi, '<strong class="key-word"> DESC </strong>') );
+
+			// console.log(oFrom)
 		}
-		// 去掉多余的字符串
-		sqlStr = sqlStr.replace(/(\d{4}-\d{2}-\d{2}.*\: )|(\n\d{4}-\d{2}-\d{2}.*)/gm, '');
-		// 格式化
-		// sqlStr = sqlStr.replace(/select/gmi, '<span class="select">SELECT</span><p class="indent1">');
-		// sqlStr = sqlStr.replace(/from/gmi, '</p><span class="from">FROM</span>');
-		// sqlStr = sqlStr.replace(/left\s+join/gi, '<span class="left-join">LEFT JOIN</span>');
-		// sqlStr = sqlStr.replace(/where/gi, '<span class="where">WHERE</span>');
-		// sqlStr = sqlStr.replace(/\(/gi, '<br/>(');
-		// sqlStr = sqlStr.replace(/\)/gi, '<br/>)');
 
-		sqlRender(sqlStr);
-		
+		// 渲染sql
+		function sqlRender(oSql) {
+			oSql = sqlFormat(oSql);
+			// 换行
+			oSql = oSql.replace(/\(/gi, '(<br/><span class="indent1">');
+			oSql = oSql.replace(/\)/gi, '</span><br/>)');
+			oSql = oSql.replace(/,/gi, ',<br/>');
+			oSql = oSql.replace(/and/gi, '<br/>AND');
+			outputArea.innerHTML = oSql;
 
-		$('#outputArea').html( $('#outputArea').html().replace(/select/gmi, '<strong class="key-word">SELECT</strong>') );
-		$('#outputArea').html( $('#outputArea').html().replace(/from/gmi, '<strong class="key-word">FROM</strong>') );
-		$('#outputArea').html( $('#outputArea').html().replace(/left\s+join/gi, '<strong class="key-word">LEFT JOIN</strong>') );
-		$('#outputArea').html( $('#outputArea').html().replace(/where/gi, '<strong class="key-word">WHERE</strong>') );
-		$('#outputArea').html( $('#outputArea').html().replace(/order\s+by/gi, '<strong class="key-word">ORDER BY</strong>') );
-		$('#outputArea').html( $('#outputArea').html().replace(/and/gi, '<strong class="key-word">AND</strong>') );
-		$('#outputArea').html( $('#outputArea').html().replace(/\s+as\s+/gi, '<strong class="key-word"> AS </strong>') );
-		$('#outputArea').html( $('#outputArea').html().replace(/\s+on\s+/gi, '<strong class="key-word"> ON </strong>') );
-		$('#outputArea').html( $('#outputArea').html().replace(/\s+limit\s+/gi, '<strong class="key-word"> LIMIT </strong>') );
-		$('#outputArea').html( $('#outputArea').html().replace(/\s+asc\s+/gi, '<strong class="key-word"> ASC </strong>') );
-		$('#outputArea').html( $('#outputArea').html().replace(/\s+desc\s+/gi, '<strong class="key-word"> DESC </strong>') );
+			$(".indent1").each(function () {
+				// $(this).html(sqlFormat($(this).html()));
+				$(this).html( $(this).html().replace(/select/gmi, 'SELECT<br/>') );
+				$(this).html( $(this).html().replace(/from/gmi, '<br/>FROM<br/>') );
+				$(this).html( $(this).html().replace(/left\s+join/gmi, '<br/>LEFT JOIN<br/>') );
+				$(this).html( $(this).html().replace(/where/gmi, '<br/>WHERE<br/>') );
+			})
+		}
+		// 格式化sql
+		function sqlFormat(oSql) {
+			// 最外层格式化
+			if (oSql.match(/.*(?=FROM)/gi) == null) {
+				return oSql;
+			}
+			var oSelect = '';
+			// TODO
+			oSelect = oSql.match(/.*(?=FROM)/gi)[0].replace(/select/i, 'SELECT <p class="indent1">') + '</p>';
+			var froms = oSql.split(/from/gi);
+			var oFrom = 'FROM <p class="indent1">' + froms[froms.length-1].split(/where/gi)[0] + '</p>';
+			var owhere = '';
+			var oOrder = '';
+			if (froms[froms.length-1].split(/where/gi)[1].search(/order\s+by/gi) > 0) { // 如果有order by
+				owhere = 'WHERE <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1].split(/order\s+by/gi)[0] + '</p>';
+				oOrder = 'ORDER BY <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1].split(/order\s+by/gi)[1] + '</p>';
+			} else {
+				owhere = 'WHERE <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1] + '</p>';
+				
+			}
 
-		// console.log(oFrom)
-	}
-
-	/*$("#outputArea").on('dblclick', function () {
-		$(this).unwrap().wrap('<textarea id="" style="width:100%; heigth:100%">' + $(this).text() + '</textarea>t').select();
-	})*/
-
-	// 渲染sql
-	function sqlRender(oSql) {
-		oSql = sqlFormat(oSql);
-		// 换行
-		oSql = oSql.replace(/\(/gi, '(<br/><span class="indent1">');
-		oSql = oSql.replace(/\)/gi, '</span><br/>)');
-		oSql = oSql.replace(/,/gi, ',<br/>');
-		oSql = oSql.replace(/and/gi, '<br/>AND');
-		outputArea.innerHTML = oSql;
-
-		$(".indent1").each(function () {
-			// $(this).html(sqlFormat($(this).html()));
-			$(this).html( $(this).html().replace(/select/gmi, 'SELECT<br/>') );
-			$(this).html( $(this).html().replace(/from/gmi, '<br/>FROM<br/>') );
-			$(this).html( $(this).html().replace(/left\s+join/gmi, '<br/>LEFT JOIN<br/>') );
-			$(this).html( $(this).html().replace(/where/gmi, '<br/>WHERE<br/>') );
-		})
-	}
-	// 格式化sql
-	function sqlFormat(oSql) {
-		// 最外层格式化
-		if (oSql.match(/.*(?=FROM)/gi) == null) {
+			oSql = oSelect + oFrom + owhere + oOrder;
 			return oSql;
 		}
-		var oSelect = '';
-		// TODO
-		oSelect = oSql.match(/.*(?=FROM)/gi)[0].replace(/select/i, 'SELECT <p class="indent1">') + '</p>';
-		var froms = oSql.split(/from/gi);
-		var oFrom = 'FROM <p class="indent1">' + froms[froms.length-1].split(/where/gi)[0] + '</p>';
-		var owhere = '';
-		var oOrder = '';
-		if (froms[froms.length-1].split(/where/gi)[1].search(/order\s+by/gi) > 0) { // 如果有order by
-			owhere = 'WHERE <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1].split(/order\s+by/gi)[0] + '</p>';
-			oOrder = 'ORDER BY <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1].split(/order\s+by/gi)[1] + '</p>';
-		} else {
-			owhere = 'WHERE <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1] + '</p>';
-			
+		// copy到剪贴板
+		function copySql(e) {
+			if (outputArea.innerText == '') {
+				alert("啥也没有你让我复制个P丫 o(ﾟДﾟ)っ！"); 
+				return;
+			}
+
+			try {
+				outputArea_hide.value = outputArea.innerText;
+				outputArea_hide.select();
+				document.execCommand("copy",false,null);
+				alert("已复制到剪贴板 Ψ(￣∀￣)Ψ")
+			} catch(err) {
+				alert("copy到剪贴板失败，你的牛腩器好像不滋泚哦 ┓(;´_｀)┏")
+			}
 		}
-
-		oSql = oSelect + oFrom + owhere + oOrder;
-		return oSql;
-	}
-
-	// 点击copy到剪贴板
-	copy_btn.onclick = function (e) {
-		if (outputArea.innerText == '') {
-			alert("啥也没有你让我复制个P丫 o(ﾟДﾟ)っ！"); 
-			return;
-		}
-
-		try {
-			outputArea_hide.value = outputArea.innerText;
-			outputArea_hide.select();
-			document.execCommand("copy",false,null);
-			alert("已复制到剪贴板 Ψ(￣∀￣)Ψ")
-		} catch(err) {
-			alert("copy到剪贴板失败，你的牛腩器好像不滋泚哦 ┓(;´_｀)┏")
+		
+		return {
+			start: start,
+			copySql: copySql
 		}
 	}
 
