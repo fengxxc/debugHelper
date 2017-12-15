@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Navimice</title>
+	<title>Navimice 1.2</title>
 	<style>
 		html, body, #main{
 			height: 100%;
@@ -66,10 +66,6 @@
 			/*display: block;*/
 			color: #88F;
 		}
-		.indent1{
-			display: block;
-			padding-left: 1rem;
-		}
 	</style>
 </head>
 <body>
@@ -101,81 +97,131 @@
 		// 开始
 		function start(sqlStr) {
 			if (!sqlStr) {return;}
-			var params = sqlStr.match(/Parameters: .*/)[0].replace(/Parameters: |\(String\)/g, '').split(', ');
-			// 替换所有问号
-			for (var i = 0; i < params.length; i++) {
-				sqlStr = sqlStr.replace(/\?/, "<mark>'"+params[i]+"'</mark>");
+
+			// ? -> '参数'
+			var params = [];
+			if (sqlStr.match(/Parameters: .*/)) {
+				params = sqlStr.match(/Parameters: .*/)[0].replace(/Parameters: |\(String\)/g, '').split(', ');
+
+				// 替换所有问号
+				for (var i = 0; i < params.length; i++) {
+					sqlStr = sqlStr.replace(/\?/, "<mark>'"+params[i]+"'</mark>");
+				}
 			}
+
 			// 去掉多余的字符串
 			sqlStr = sqlStr.replace(/(\d{4}-\d{2}-\d{2}.*\: )|(\n\d{4}-\d{2}-\d{2}.*)/gm, '');
-			// 格式化
-			// sqlStr = sqlStr.replace(/select/gmi, '<span class="select">SELECT</span><p class="indent1">');
-			// sqlStr = sqlStr.replace(/from/gmi, '</p><span class="from">FROM</span>');
-			// sqlStr = sqlStr.replace(/left\s+join/gi, '<span class="left-join">LEFT JOIN</span>');
-			// sqlStr = sqlStr.replace(/where/gi, '<span class="where">WHERE</span>');
-			// sqlStr = sqlStr.replace(/\(/gi, '<br/>(');
-			// sqlStr = sqlStr.replace(/\)/gi, '<br/>)');
-
-			sqlRender(sqlStr);
 			
 
-			$('#outputArea').html( $('#outputArea').html().replace(/select/gmi, '<strong class="key-word">SELECT</strong>') );
-			$('#outputArea').html( $('#outputArea').html().replace(/from/gmi, '<strong class="key-word">FROM</strong>') );
-			$('#outputArea').html( $('#outputArea').html().replace(/left\s+join/gi, '<strong class="key-word">LEFT JOIN</strong>') );
-			$('#outputArea').html( $('#outputArea').html().replace(/where/gi, '<strong class="key-word">WHERE</strong>') );
-			$('#outputArea').html( $('#outputArea').html().replace(/order\s+by/gi, '<strong class="key-word">ORDER BY</strong>') );
-			$('#outputArea').html( $('#outputArea').html().replace(/and/gi, '<strong class="key-word">AND</strong>') );
-			$('#outputArea').html( $('#outputArea').html().replace(/\s+as\s+/gi, '<strong class="key-word"> AS </strong>') );
-			$('#outputArea').html( $('#outputArea').html().replace(/\s+on\s+/gi, '<strong class="key-word"> ON </strong>') );
-			$('#outputArea').html( $('#outputArea').html().replace(/\s+limit\s+/gi, '<strong class="key-word"> LIMIT </strong>') );
-			$('#outputArea').html( $('#outputArea').html().replace(/\s+asc\s+/gi, '<strong class="key-word"> ASC </strong>') );
-			$('#outputArea').html( $('#outputArea').html().replace(/\s+desc\s+/gi, '<strong class="key-word"> DESC </strong>') );
+			// oSql = sqlFormat(oSql);
+			
+			// 插入'<br/>'
+			sqlStr = sqlStr.replace(/select/gmi, 'SELECT<br/>')
+						   .replace(/from/gmi, '<br/>FROM')
+						   .replace(/left\s+join/gi, '<br/>LEFT JOIN<br/>')
+						   .replace(/where/gi, '<br/>WHERE<br/>')
+						   .replace(/order\s+by/gi, '<br/>ORDER BY')
+						   .replace(/and/gi, 'AND')
+						   .replace(/\s+as\s+/gi, ' AS ')
+						   .replace(/\s+on\s+/gi, ' ON ')
+						   .replace(/\s+limit\s+/gi, ' LIMIT ')
+						   .replace(/\s+asc\s+/gi, ' ASC ')
+						   .replace(/\s+desc\s+/gi, ' DESC ')
+						   .replace(/\(/gi, '(<br/>')
+						   .replace(/\)/gi, '<br/> )')
+						   .replace(/,/gi, ',<br/>')
+						   .replace(/and/gi, '<br/>AND');
 
-			// console.log(oFrom)
-		}
+			/* 2017年12月2日22:46:08 */
+			var strArr = [];
+			strArr = sqlStr.split('<br/>');
 
-		// 渲染sql
-		function sqlRender(oSql) {
-			oSql = sqlFormat(oSql);
-			// 换行
-			oSql = oSql.replace(/\(/gi, '(<br/><span class="indent1">');
-			oSql = oSql.replace(/\)/gi, '</span><br/>)');
-			oSql = oSql.replace(/,/gi, ',<br/>');
-			oSql = oSql.replace(/and/gi, '<br/>AND');
-			outputArea.innerHTML = oSql;
+			// 当前缩进数
+			var tabNum = 0;
+			// 第一个'('所在行的缩进数
+			var firstLeftBraTab = false;
+			// 括号层数
+			var bracketNum = 0;
 
-			$(".indent1").each(function () {
-				// $(this).html(sqlFormat($(this).html()));
-				$(this).html( $(this).html().replace(/select/gmi, 'SELECT<br/>') );
-				$(this).html( $(this).html().replace(/from/gmi, '<br/>FROM<br/>') );
-				$(this).html( $(this).html().replace(/left\s+join/gmi, '<br/>LEFT JOIN<br/>') );
-				$(this).html( $(this).html().replace(/where/gmi, '<br/>WHERE<br/>') );
-			})
-		}
-		// 格式化sql
-		function sqlFormat(oSql) {
-			// 最外层格式化
-			if (oSql.match(/.*(?=FROM)/gi) == null) {
-				return oSql;
+			for (var i = 0 ; i < strArr.length; i++) {
+				var str = strArr[i];
+
+				var tabStr = '';
+
+				if (str.search(/\(/) > -1) {
+					if (!firstLeftBraTab) {
+						// 第一个'('所在行的缩进数
+						firstLeftBraTab = tabNum;
+					}
+					bracketNum ++;
+				}
+
+				/* 1、本身缩进；2、下一行缩进数 */
+				// SELECT
+				if (str.search('SELECT') > -1) {
+					strArr[i] = generateTab(tabNum) + str;
+					tabNum += 2;
+				}
+				// 顶格(
+				else if (str.search(/^\s*\(/) > -1) {
+					strArr[i] = generateTab(tabNum) + str;
+					tabNum += 2;
+				}
+				// FROM \ WHERE \ AND \ LEFT JOIN \ ORDER BY
+				else if (str.search('FROM') > -1 || str.search('WHERE') > -1 || str.search('AND') > -1 || str.search('LEFT JOIN') > -1 || str.search('ORDER BY') > -1) {
+					strArr[i] = generateTab(tabNum-2) + str;
+				}
+				// ')'
+				else if (str.search(/\)/) > -1) {
+					if (bracketNum == 1 && firstLeftBraTab) {
+						// 跟第一次出现的左括号保持同样的缩进
+						strArr[i] = generateTab(firstLeftBraTab) + str;
+						tabNum = firstLeftBraTab;
+						firstLeftBraTab = false;
+					} else {
+						strArr[i] = generateTab(tabNum-2) + str;
+						tabNum -= 2;
+					}
+					bracketNum --;
+				}
+				else {
+					strArr[i] = generateTab(tabNum) + str;
+				}
 			}
-			var oSelect = '';
-			// TODO
-			oSelect = oSql.match(/.*(?=FROM)/gi)[0].replace(/select/i, 'SELECT <p class="indent1">') + '</p>';
-			var froms = oSql.split(/from/gi);
-			var oFrom = 'FROM <p class="indent1">' + froms[froms.length-1].split(/where/gi)[0] + '</p>';
-			var owhere = '';
-			var oOrder = '';
-			if (froms[froms.length-1].split(/where/gi)[1].search(/order\s+by/gi) > 0) { // 如果有order by
-				owhere = 'WHERE <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1].split(/order\s+by/gi)[0] + '</p>';
-				oOrder = 'ORDER BY <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1].split(/order\s+by/gi)[1] + '</p>';
-			} else {
-				owhere = 'WHERE <p class="indent1">' + froms[froms.length-1].split(/where/gi)[1] + '</p>';
-				
-			}
 
-			oSql = oSelect + oFrom + owhere + oOrder;
-			return oSql;
+			sqlStr = strArr.join('<br/>');
+			// console.log(strArr)
+
+
+			/* 这比较有用，留着参考
+			sqlStr = sqlStr.replace(/\(/gi, '(<br/><span class="indent1">');
+			sqlStr = sqlStr.replace(/\)/gi, '</span><br/>)');*/
+
+			// 关键字高亮
+			sqlStr = sqlStr.replace(/select/gmi, '<strong class="key-word">SELECT</strong>')
+						   .replace(/from/gmi, '<strong class="key-word">FROM</strong>')
+						   .replace(/left\s+join/gi, '<strong class="key-word">LEFT JOIN</strong>')
+						   .replace(/where/gi, '<strong class="key-word">WHERE</strong>')
+						   .replace(/order\s+by/gi, '<strong class="key-word">ORDER BY</strong>')
+						   .replace(/and/gi, '<strong class="key-word">AND</strong>')
+						   .replace(/\s+as\s+/gi, '<strong class="key-word"> AS </strong>')
+						   .replace(/\s+on\s+/gi, '<strong class="key-word"> ON </strong>')
+						   .replace(/\s+limit\s+/gi, '<strong class="key-word"> LIMIT </strong>')
+						   .replace(/\s+asc\s+/gi, '<strong class="key-word"> ASC </strong>')
+						   .replace(/\s+desc\s+/gi, '<strong class="key-word"> DESC </strong>');
+			outputArea.innerHTML = sqlStr;
+
 		}
+
+		function generateTab(num) {
+			var tabStr = '';
+			for (var i = 0; i < num; i++) {
+				tabStr += '<span class="space"></span>';
+				// tabStr += '~~';
+			}
+			return tabStr;
+		}
+	
 		// copy到剪贴板
 		function copySql(e) {
 			if (outputArea.innerText == '') {
@@ -199,15 +245,6 @@
 		}
 	}
 
-	// 鼠标移入结果区显示copy按钮
-	/*$('.right').on('mouseover mouseout', function (e) {
-		if (e.type == 'mouseover') {
-			$(copy_btn).show();
-		} else if (e.type == 'mouseout') {
-			$(copy_btn).hide();
-		}
-		
-	})*/
 </script>
 </body>
 </html>
