@@ -77,7 +77,6 @@
 		<button id="copy-btn">复制结果</button>
 		<textarea id="outputArea_hide" cols="0" rows="0"></textarea>
 	</div>
-<script src="jquery-1.11.3.min.js"></script>
 <script>
 	var do_btn = document.getElementById('do-btn');
 	var copy_btn = document.getElementById('copy-btn');
@@ -96,7 +95,7 @@
 
 		// 开始
 		function start(sqlStr) {
-			if (!sqlStr) {return;}
+			if (!sqlStr) return;
 
 			// ? -> '参数'
 			var params = [];
@@ -117,11 +116,12 @@
 			
 			// 插入'<br/>'
 			sqlStr = sqlStr.replace(/select/gmi, 'SELECT<br/>')
-						   .replace(/from/gmi, '<br/>FROM')
+						   .replace(/from/gmi, '<br/>FROM<br/>')
 						   .replace(/left\s+join/gi, '<br/>LEFT JOIN<br/>')
+						   .replace(/group\s+by/gi, '<br/>GROUP BY<br/>')
 						   .replace(/where/gi, '<br/>WHERE<br/>')
-						   .replace(/order\s+by/gi, '<br/>ORDER BY')
 						   .replace(/and/gi, 'AND')
+						   .replace(/\s*order\s+by/gi, '<br/>ORDER BY')
 						   .replace(/\s+as\s+/gi, ' AS ')
 						   .replace(/\s+on\s+/gi, ' ON ')
 						   .replace(/\s+limit\s+/gi, ' LIMIT ')
@@ -129,7 +129,7 @@
 						   .replace(/\s+desc\s+/gi, ' DESC ')
 						   .replace(/\(/gi, '(<br/>')
 						   .replace(/\)/gi, '<br/> )')
-						   .replace(/,/gi, ',<br/>')
+						   .replace(/\s*,/gi, ',<br/>')
 						   .replace(/and/gi, '<br/>AND');
 
 			/* 2017年12月2日22:46:08 */
@@ -162,15 +162,6 @@
 					strArr[i] = generateTab(tabNum) + str;
 					tabNum += 2;
 				}
-				// 顶格(
-				else if (str.search(/^\s*\(/) > -1) {
-					strArr[i] = generateTab(tabNum) + str;
-					tabNum += 2;
-				}
-				// FROM \ WHERE \ AND \ LEFT JOIN \ ORDER BY
-				else if (str.search('FROM') > -1 || str.search('WHERE') > -1 || str.search('AND') > -1 || str.search('LEFT JOIN') > -1 || str.search('ORDER BY') > -1) {
-					strArr[i] = generateTab(tabNum-2) + str;
-				}
 				// ')'
 				else if (str.search(/\)/) > -1) {
 					if (bracketNum == 1 && firstLeftBraTab) {
@@ -184,6 +175,23 @@
 					}
 					bracketNum --;
 				}
+				// '('
+				// else if (str.search(/^\s*\(/) > -1) { // 顶格(
+				else if (str.search(/\(/) > -1) {
+					strArr[i] = generateTab(tabNum) + str;
+					tabNum += 2;
+				}
+				// FROM \ WHERE \ AND \ LEFT JOIN \ ORDER BY
+				else if (	str.search('FROM') > -1 
+							|| str.search('WHERE') > -1 
+							|| str.search('AND') > -1 
+							|| str.search('LEFT JOIN') > -1 
+							|| str.search('ORDER BY') > -1
+							|| str.search('GROUP BY') > -1
+						) {
+					strArr[i] = generateTab(tabNum-2) + str;
+				}
+				
 				else {
 					strArr[i] = generateTab(tabNum) + str;
 				}
@@ -201,6 +209,7 @@
 			sqlStr = sqlStr.replace(/select/gmi, '<strong class="key-word">SELECT</strong>')
 						   .replace(/from/gmi, '<strong class="key-word">FROM</strong>')
 						   .replace(/left\s+join/gi, '<strong class="key-word">LEFT JOIN</strong>')
+						   .replace(/group\s+by/gi, '<strong class="key-word">GROUP BY</strong>')
 						   .replace(/where/gi, '<strong class="key-word">WHERE</strong>')
 						   .replace(/order\s+by/gi, '<strong class="key-word">ORDER BY</strong>')
 						   .replace(/and/gi, '<strong class="key-word">AND</strong>')
