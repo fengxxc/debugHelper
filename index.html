@@ -107,8 +107,8 @@
 			}
 
 			// 去掉多余的字符串
-			sqlStr = sqlStr.replace(/(\d{4}-\d{2}-\d{2}.*\: )|(\n\d{4}-\d{2}-\d{2}.*)/gm, '');
-			
+			sqlStr = sqlStr.replace(/(\d{4}-\d{2}-\d{2}.*\: )|(\n\d{4}-\d{2}-\d{2}.*)/gm, '')
+			.replace(/^.*select/i, 'SELECT');
 			const st = new SqlTree(sqlStr);
 			const str =  st.getHTMLString();
 			outputArea.innerHTML = str;

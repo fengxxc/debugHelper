@@ -11,10 +11,10 @@ const isKeyL = (str) => typeof str === 'string' && (
     || str.toLowerCase() == SqlKey.UPDATE 
     || str.toLowerCase() == SqlKey.SET 
     || str.toLowerCase() == SqlKey.LIMIT
-    || str.toLowerCase() == SqlKey.AND 
 );
 const isKeyC = (str) => typeof str === 'string' && (
     str.toLowerCase() == SqlKey.OR 
+    || str.toLowerCase() == SqlKey.AND 
     || str.toLowerCase() == SqlKey.ON 
     || str.toLowerCase() == SqlKey.LIKE 
     || str.toLowerCase() == SqlKey.ASC 
@@ -75,6 +75,7 @@ class SqlTree {
         if (sql)
             this.init(sql);
     }
+    // 预处理
     static _pretreatment(sql) {
         // sql = sql.replace(/\(|\)/g, " $& "); // 括号两侧加空格
         // sql = sql.replace(/join/ig, '_$&');
@@ -82,6 +83,7 @@ class SqlTree {
         sql = sql.replace(/\((\s*|\n*)select/ig, " select ").replace(/\)/g, " $& ");
         return sql;
     }
+    // 分词，转成数组
     static _toWordArr(sql) {
         let arr = sql.split(/\s+|\n+/);
         if (arr < 1) return [];
@@ -111,6 +113,7 @@ class SqlTree {
         }
         return arr;
     }
+    // 按嵌套等级分组
     static _extractionNests(sqlArr) {
         // console.log(sqlArr);
         let nestList = [];
@@ -132,7 +135,7 @@ class SqlTree {
         // console.log(nestList);
         return nestList;
     }
-
+    // 转成json格式的树形结构
     static toJsonTree(sql) {
         const rootList = SqlTree._extractionNests(SqlTree._toWordArr(SqlTree._pretreatment(sql)));
         const level = 0;
@@ -176,7 +179,7 @@ class SqlTree {
         // this.setJsonTree(SqlTree.toJsonTree(sql));
         this.jsonTree = SqlTree.toJsonTree(sql);
     }
-
+    // 获得显示在页面上的html
     getHTMLString() {
         return this._getHTMLString(this.jsonTree, [], 0).join('');
     }
