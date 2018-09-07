@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Navimice 2.0</title>
+	<title>Navimice 1.2</title>
 	<style>
 		html, body, #main{
 			height: 100%;
 			/*line-height: 100%;*/
 			margin: 0;
 			padding: 0;
-
 		}
 		#inputArea,#outputArea{
 			display: inline-block;
@@ -77,50 +76,148 @@
 		<button id="copy-btn">复制结果</button>
 		<textarea id="outputArea_hide" cols="0" rows="0"></textarea>
 	</div>
-<script src="SqlUtils.js"></script>
 <script>
-	const do_btn = document.getElementById('do-btn');
-	const copy_btn = document.getElementById('copy-btn');
-	const outputArea = document.getElementById('outputArea');
-	const outputArea_hide = document.getElementById('outputArea_hide');
-	const navimice = Navimice();
-	do_btn.onclick = () => {
-		const sqlStr = document.getElementById('inputArea').value;
-		navimice.start(sqlStr);
+	var do_btn = document.getElementById('do-btn');
+	var copy_btn = document.getElementById('copy-btn');
+	var outputArea = document.getElementById('outputArea');
+	var outputArea_hide = document.getElementById('outputArea_hide');
+	do_btn.onclick = function () {
+		var sqlStr = document.getElementById('inputArea').value;
+		Navimice().start(sqlStr);
 	}
 	// 点击copy到剪贴板
-	copy_btn.onclick = () => {
-		navimice.copySql();
+	copy_btn.onclick = function () {
+		Navimice().copySql();
 	}
-	function Navimice() {
+	var Navimice = function () {
 		// 开始
-		const start = (sqlStr) => {
+		function start(sqlStr) {
 			if (!sqlStr) return;
 			// ? -> '参数'
-			let params = [];
+			var params = [];
 			if (sqlStr.match(/Parameters: .*/)) {
 				params = sqlStr.match(/Parameters: .*/)[0].replace(/Parameters: |\(String\)/g, '').split(', ');
 				// 替换所有问号
-				for (let i = 0; i < params.length; i++) {
+				for (var i = 0; i < params.length; i++) {
 					sqlStr = sqlStr.replace(/\?/, "<mark>'"+params[i]+"'</mark>");
 				}
 			}
-
 			// 去掉多余的字符串
-			sqlStr = sqlStr.replace(/(\d{4}-\d{2}-\d{2}.*\: )|(\n\d{4}-\d{2}-\d{2}.*)/gm, '')
-			.replace(/^.*select/i, 'SELECT');
-			const st = new SqlTree(sqlStr);
-			const str =  st.getHTMLString();
-			outputArea.innerHTML = str;
+			sqlStr = sqlStr.replace(/(\d{4}-\d{2}-\d{2}.*\: )|(\n\d{4}-\d{2}-\d{2}.*)/gm, '');
+			
+			// oSql = sqlFormat(oSql);
+			
+			// 插入'<br/>'
+			sqlStr = sqlStr.replace(/select/gmi, 'SELECT<br/>')
+						   .replace(/from/gmi, '<br/>FROM<br/>')
+						   .replace(/left\s+join/gi, '<br/>LEFT JOIN<br/>')
+						   .replace(/group\s+by/gi, '<br/>GROUP BY<br/>')
+						   .replace(/where/gi, '<br/>WHERE<br/>')
+						   .replace(/and/gi, 'AND')
+						   .replace(/\s*order\s+by/gi, '<br/>ORDER BY')
+						   .replace(/\s+as\s+/gi, ' AS ')
+						   .replace(/\s+on\s+/gi, ' ON ')
+						   .replace(/\s+limit\s+/gi, ' LIMIT ')
+						   .replace(/\s+asc\s+/gi, ' ASC ')
+						   .replace(/\s+desc\s+/gi, ' DESC ')
+						   .replace(/\(/gi, '(<br/>')
+						   .replace(/\)/gi, '<br/> )')
+						   .replace(/\s*,/gi, ',<br/>')
+						   .replace(/and/gi, '<br/>AND');
+			/* 2017年12月2日22:46:08 */
+			var strArr = [];
+			strArr = sqlStr.split('<br/>');
+			// 当前缩进数
+			var tabNum = 0;
+			// 第一个'('所在行的缩进数
+			var firstLeftBraTab = false;
+			// 括号层数
+			var bracketNum = 0;
+			for (var i = 0 ; i < strArr.length; i++) {
+				var str = strArr[i];
+				var tabStr = '';
+				if (str.search(/\(/) > -1) {
+					if (!firstLeftBraTab) {
+						// 第一个'('所在行的缩进数
+						firstLeftBraTab = tabNum;
+					}
+					bracketNum ++;
+				}
+				/* 1、本身缩进；2、下一行缩进数 */
+				// SELECT
+				if (str.search('SELECT') > -1) {
+					strArr[i] = generateTab(tabNum) + str;
+					tabNum += 2;
+				}
+				// ')'
+				else if (str.search(/\)/) > -1) {
+					if (bracketNum == 1 && firstLeftBraTab) {
+						// 跟第一次出现的左括号保持同样的缩进
+						strArr[i] = generateTab(firstLeftBraTab) + str;
+						tabNum = firstLeftBraTab;
+						firstLeftBraTab = false;
+					} else {
+						strArr[i] = generateTab(tabNum-2) + str;
+						tabNum -= 2;
+					}
+					bracketNum --;
+				}
+				// '('
+				// else if (str.search(/^\s*\(/) > -1) { // 顶格(
+				else if (str.search(/\(/) > -1) {
+					strArr[i] = generateTab(tabNum) + str;
+					tabNum += 2;
+				}
+				// FROM \ WHERE \ AND \ LEFT JOIN \ ORDER BY
+				else if (	str.search('FROM') > -1 
+							|| str.search('WHERE') > -1 
+							|| str.search('AND') > -1 
+							|| str.search('LEFT JOIN') > -1 
+							|| str.search('ORDER BY') > -1
+							|| str.search('GROUP BY') > -1
+						) {
+					strArr[i] = generateTab(tabNum-2) + str;
+				}
+				
+				else {
+					strArr[i] = generateTab(tabNum) + str;
+				}
+			}
+			sqlStr = strArr.join('<br/>');
+			// console.log(strArr)
+			/* 这比较有用，留着参考
+			sqlStr = sqlStr.replace(/\(/gi, '(<br/><span class="indent1">');
+			sqlStr = sqlStr.replace(/\)/gi, '</span><br/>)');*/
+			// 关键字高亮
+			sqlStr = sqlStr.replace(/select/gmi, '<strong class="key-word">SELECT</strong>')
+						   .replace(/from/gmi, '<strong class="key-word">FROM</strong>')
+						   .replace(/left\s+join/gi, '<strong class="key-word">LEFT JOIN</strong>')
+						   .replace(/group\s+by/gi, '<strong class="key-word">GROUP BY</strong>')
+						   .replace(/where/gi, '<strong class="key-word">WHERE</strong>')
+						   .replace(/order\s+by/gi, '<strong class="key-word">ORDER BY</strong>')
+						   .replace(/and/gi, '<strong class="key-word">AND</strong>')
+						   .replace(/\s+as\s+/gi, '<strong class="key-word"> AS </strong>')
+						   .replace(/\s+on\s+/gi, '<strong class="key-word"> ON </strong>')
+						   .replace(/\s+limit\s+/gi, '<strong class="key-word"> LIMIT </strong>')
+						   .replace(/\s+asc\s+/gi, '<strong class="key-word"> ASC </strong>')
+						   .replace(/\s+desc\s+/gi, '<strong class="key-word"> DESC </strong>');
+			outputArea.innerHTML = sqlStr;
+		}
+		function generateTab(num) {
+			var tabStr = '';
+			for (var i = 0; i < num; i++) {
+				tabStr += '<span class="space"></span>';
+				// tabStr += '~~';
+			}
+			return tabStr;
 		}
 	
 		// copy到剪贴板
-		const copySql = () => {
+		function copySql(e) {
 			if (outputArea.innerText == '') {
-				alert("啥也没有你让我复制个P丫 o(ﾟДﾟ)っ！");
+				alert("啥也没有你让我复制个P丫 o(ﾟДﾟ)っ！"); 
 				return;
 			}
-
 			try {
 				outputArea_hide.value = outputArea.innerText;
 				outputArea_hide.select();
@@ -136,7 +233,6 @@
 			copySql: copySql
 		}
 	}
-
 </script>
 </body>
 </html>
