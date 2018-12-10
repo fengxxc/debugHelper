@@ -59,14 +59,16 @@ class SelectSqlMod {
                 for (let j = 0; j < select.length; j++) {
                     const _s = select[j];
                     if (typeof _s == 'string') {
-                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')} `)
+                        if (j != 0 && !_s.match(/^,|\(/))  // 非第一个、非逗号、非括号
+                            html.push(` `)
+                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')}`)
                     } else { // 括号包裹的函数 // 或子查询
                         html.push(`(`)
                         this._formatHTML(_s, html, subLevel + 1)
                         if (_s['_SELECT'] && _s['_SELECT'].length == 0)
                             html.push(`)`)
                         else
-                            html.push(`<br>${subindent}) `)
+                            html.push(`<br>${subindent})`)
                     }
 
                 }
@@ -85,14 +87,16 @@ class SelectSqlMod {
                 for (let j = 0; j < from.length; j++) {
                     const _s = from[j];
                     if (typeof _s == 'string') {
-                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')} `)
+                        if (j != 0 && !_s.match(/^,|\(/))  // 非第一个、非逗号、非括号
+                            html.push(` `)
+                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')}`)
                     } else { // 括号包裹的函数 // 或子查询
                         html.push(`(`)
                         this._formatHTML(_s, html, subLevel + 1)
                         if (_s['_SELECT'] && _s['_SELECT'].length == 0)
                             html.push(`)`)
                         else
-                            html.push(`<br>${subindent}) `)
+                            html.push(`<br>${subindent})`)
                     }
 
                 }
@@ -111,14 +115,16 @@ class SelectSqlMod {
                 for (let j = 0; j < where.length; j++) {
                     const _s = where[j];
                     if (typeof _s == 'string') {
-                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')} `)
+                        if (j != 0 && !_s.match(/^,|\(/))  // 非第一个、非逗号、非括号
+                            html.push(` `)
+                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')}`)
                     } else { // 括号包裹的函数 // 或子查询
                         html.push(`(`)
                         this._formatHTML(_s, html, subLevel + 1)
                         if (_s['_SELECT'] && _s['_SELECT'].length == 0)
                             html.push(`)`)
                         else
-                            html.push(`<br>${subindent}) `)
+                            html.push(`<br>${subindent})`)
                     }
 
                 }
@@ -136,14 +142,16 @@ class SelectSqlMod {
                 for (let j = 0; j < group.length; j++) {
                     const _s = group[j];
                     if (typeof _s == 'string') {
-                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')} `)
+                        if (j != 0 && !_s.match(/^,|\(/))  // 非第一个、非逗号、非括号
+                            html.push(` `)
+                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')}`)
                     } else {
                         html.push(`(`)
                         this._formatHTML(_s, html, subLevel + 1)
                         if (_s['_SELECT'] && _s['_SELECT'].length == 0)
                             html.push(`)`)
                         else
-                            html.push(`<br>${subindent}) `)
+                            html.push(`<br>${subindent})`)
                     }
 
                 }
@@ -162,14 +170,16 @@ class SelectSqlMod {
                 for (let j = 0; j < having.length; j++) {
                     const _s = having[j];
                     if (typeof _s == 'string') {
-                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')} `)
+                        if (j != 0 && !_s.match(/^,|\(/))  // 非第一个、非逗号、非括号
+                            html.push(` `)
+                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')}`)
                     } else { // 括号包裹的函数 // 或子查询
                         html.push(`(`)
                         this._formatHTML(_s, html, subLevel + 1)
                         if (_s['_SELECT'] && _s['_SELECT'].length == 0)
                             html.push(`)`)
                         else
-                            html.push(`<br>${subindent}) `)
+                            html.push(`<br>${subindent})`)
                     }
 
                 }
@@ -187,14 +197,16 @@ class SelectSqlMod {
                 for (let j = 0; j < order.length; j++) {
                     const _s = order[j];
                     if (typeof _s == 'string') {
-                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')} `)
+                        if (j != 0 && !_s.match(/^,|\(/))  // 非第一个、非逗号、非括号
+                            html.push(` `)
+                        html.push(`${SqlModUtil.formatKeywordInSql(_s, m=>'<span class="kword">'+m.toUpperCase()+'</span>')}`)
                     } else {
                         html.push(`(`)
                         this._formatHTML(_s, html, subLevel + 1)
                         if (_s['_SELECT'] && _s['_SELECT'].length == 0)
                             html.push(`)`)
                         else
-                            html.push(`<br>${subindent}) `)
+                            html.push(`<br>${subindent})`)
                     }
 
                 }
@@ -422,6 +434,16 @@ class SqlModUtil {
             |(\\s+AS|^AS)
             |(\\s+ON|^ON)
             |(\\s+LIKE|^LIKE)
+            |(\\s+SUM|^SUM)
+            |(\\s+COUNT|^COUNT)
+            |(\\s+AVG|^AVG)
+            |(\\s+CASE|^CASE)
+            |(\\s+IF|^IF)
+            |(\\s+ELSE|^ELSE)
+            |(\\s+THEN|^THEN)
+            |(\\s+WHEN|^WHEN)
+            |(\\s+BETWEEN|^BETWEEN)
+            |(\\s+END|^END)
         )`.replace(/(\s+|\n+)/g, '')
     }
 }

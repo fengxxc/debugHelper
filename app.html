@@ -118,7 +118,7 @@
 	</div>
 	<div id="main">
 		<textarea class="" id="left" style="resize:none;">
-2017-03-08 09:57 DEBUG b.getDyHgzPageList - ==>  Preparing: SELECT bm.id on AS "bb_id", (SELECT dictionary_name FROM sys_dictionary WHERE dictionary_code = bm.mz AND parent_dictionary_id = ( SELECT dictionary_id FROM sys_dictionary WHERE dictionary_no = ? ) ) As "bb_mz" FROM bm_bmb bm left join ks_cjb cjb on bm.bmh = cjb.bmh_id left join ks_zcjb zcjb on bm.bmh = zcjb.bmh_Id WHERE 1=1 and zcjb.sftg = '1' and zcjb.sffb = '1' and bm.user_id like ? ORDER BY bb_xm desc LIMIT 0,30 
+2017-03-08 09:57 DEBUG b.getDyHgzPageList - ==>  Preparing: SELECT bm.id AS "bb_id", (SELECT dictionary_name FROM sys_dictionary WHERE dictionary_code = bm.mz AND parent_dictionary_id = ( SELECT dictionary_id FROM sys_dictionary WHERE dictionary_no = ? ) ) As "bb_mz" FROM bm_bmb bm left join ks_cjb cjb on bm.bmh = cjb.bmh_id left join ks_zcjb zcjb on bm.bmh = zcjb.bmh_Id WHERE 1=1 and zcjb.sftg = '1' and zcjb.sffb = '1' and bm.user_id like ? ORDER BY bb_xm desc LIMIT 0,30 
 2017-03-08 09:57 DEBUG b.getDyHgzPageList - ==> Parameters: mz_zd(String), 59e58da4-da29-11e6-9689-50af7326854d(String)
 2017-03-08 09:57 DEBUG b.getDyHgzPageList - <==      Total: 5
 		</textarea>
@@ -213,14 +213,13 @@
 		for (let i = 0; i < replText.length; i++) {
 			dText = dText.replace(new RegExp(Config.beReplaceArg), `<mark>${replText[i]}</mark>`)
 		}
-		console.log(dText)
 		const sm = SqlModUtil.parse(dText)
 		const smf = sm.formatHTML()
 		$('#outTab2 .content').html(smf)
 	})
 
-	var outputArea_hide = document.getElementById('outputArea_hide');
-	var outputArea = document.getElementById('outputArea');
+	const outputArea_hide = document.getElementById('outputArea_hide');
+	const outputArea = document.getElementById('outputArea');
 	// copy到剪贴板
 	function copySql() {
 		if (outputArea.innerText == '') {
