@@ -3,88 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Navimice 2.0</title>
-	<style>
-		html, body, #main{
-			height: 100%;
-			/*line-height: 100%;*/
-			margin: 0;
-			padding: 0;
-
-		}
-		#config {
-			position: fixed;
-			z-index: 1;
-			padding: 4px 0;
-			background-color: cyan;
-			width: 100%;
-			text-align: center;
-		}
-		#main {
-			/* margin-top: 10px; */
-			text-align: center;
-			padding-top: 42px;
-			box-sizing: border-box;
-		}
-		#left,#right {
-			display: inline-block;
-			height: 99%;
-			text-align: left;
-			vertical-align: top;
-		}
-		#left {
-			box-shadow: 0 0 1px 2px #DDD;
-			border: none;
-		}
-		#left:focus {
-			box-shadow: 1px 1px 6px 2px #CCC;
-			outline: none;
-		}
-		
-		.cutoff {
-			/* text-decoration:line-through; */
-			background-color: #DDF;
-			color: #999;
-		}
-		.replacefrom {
-			background-color: #FFA;
-			color: black;
-		}
-		mark {
-			background-color: yellow !important;
-			color: black !important;
-		}
-		.kword {
-			color: #96C;
-			font-weight: 700;
-		}
-		/* .tab-content {
-			height: 100%;
-		} */
-		.tab-content .tab-pane {
-			border: 1px solid #DDD;
-			border-top: transparent;
-			border-radius: 0 0 4px 4px;
-		}
-		.tab-pane .content {
-			padding: 5px;
-		}
-		/* #outputArea {
-			font-family: Courier New;
-		} */
-		pre {
-			background-color: transparent !important;
-			border: none !important;
-		}
-		#btn_copy {
-			background-color: #98F;
-			color: #FFF;
-			border: none;
-			opacity: 0.8;
-		}
-		#btn_copy:hover {
-			opacity: 1;
-		}
-	</style>
+	<link rel="stylesheet" href="css/style.css">
 	<link href="plug/bootstrap.min.css" rel="stylesheet" type="text/css"></link>
 </head>
 <body>
@@ -117,17 +36,21 @@
 		</form>
 	</div>
 	<div id="main">
-		<textarea class="" id="left" style="resize:none;">
+		<div id="leftWarp" style="resize:none;">
+			<textarea class="text-mirror" id="leftInput" style="width:100%;">
 2017-03-08 09:57 DEBUG b.getDyHgzPageList - ==>  Preparing: SELECT bm.id AS "bb_id", (SELECT dictionary_name FROM sys_dictionary WHERE dictionary_code = bm.mz AND parent_dictionary_id = ( SELECT dictionary_id FROM sys_dictionary WHERE dictionary_no = ? ) ) As "bb_mz" FROM bm_bmb bm left join ks_cjb cjb on bm.bmh = cjb.bmh_id left join ks_zcjb zcjb on bm.bmh = zcjb.bmh_Id WHERE 1=1 and zcjb.sftg = '1' and zcjb.sffb = '1' and bm.user_id like ? ORDER BY bb_xm desc LIMIT 0,30 
 2017-03-08 09:57 DEBUG b.getDyHgzPageList - ==> Parameters: mz_zd(String), 59e58da4-da29-11e6-9689-50af7326854d(String)
 2017-03-08 09:57 DEBUG b.getDyHgzPageList - <==      Total: 5
-		</textarea>
+			</textarea>
+			<pre class="hid-inputview text-mirror"></pre>
+
+		</div>
 		&nbsp;
 		<div class="" id="right">
 			<ul class="nav nav-tabs" role="tablist" id="outTab">
-				<li role="presentation">
+				<!-- <li role="presentation">
 					<a href="#outTab1" aria-controls="tab1" id="" data-toggle="tab">正则预览</a>
-				</li>
+				</li> -->
 				<li role="presentation" class="active">
 					<a href="#outTab2" aria-controls="tab2" id="" data-toggle="tab">处理结果</a>
 				</li>
@@ -136,9 +59,9 @@
 				</li>
 			</ul>
 			<div class="tab-content">
-				<div role="tabpanel" class="tab-pane" id="outTab1">
+				<!-- <div role="tabpanel" class="tab-pane" id="outTab1">
 					<p class="content"></p>
-				</div>
+				</div> -->
 				<div role="tabpanel" class="tab-pane active" id="outTab2">
 					<pre class="content" id="outputArea"></pre>
 					<button id="btn_copy">复制结果</button>
@@ -155,16 +78,17 @@
 
 <script src="plug/jquery-1.11.1.min.js"></script>
 <script src="plug/bootstrap.min.js"></script>
-<script src="SqlUtils2.js"></script>
+<script src="js/SqlUtils2.js"></script>
+<script src="js/regExpUtils.js"></script>
 <script>
 	let Config = {}
 	const pageReSize = () => {
 		const width = $('body').width()
-		const w = (width-38)/2
-		$('#left').css('width', w)
+		const w = (width-50)/2
+		$('#leftWarp').css('width', w)
 		$('#right').css('width', w)
 	}
-	const initConfig = () => {
+	const loadConfig = () => {
 		Config = {
 			cutoff: $('#cutoff').val() || '',
 			cutoffI: $('#cutoffI').val() || '',
@@ -180,38 +104,34 @@
 		pageReSize()
 
 		// config
-		initConfig()
+		loadConfig()
 		
-		$('#left').trigger('input')
+		$('#leftInput').trigger('input')
 	}
 	
 
-	$('#left,#cutoff,#cutoffI,#cutoffG,#replaceArg,#replaceArg2,#beReplaceArg').on('input', (e) => {
-		initConfig()
-		const oText = $('#left').val()
+	$('#leftInput,#cutoff,#cutoffI,#cutoffG,#replaceArg,#replaceArg2,#beReplaceArg').on('input', (e) => {
+		loadConfig()
+		const oText = $('#leftInput').val()
 		const cutoffReg = new RegExp(Config.cutoff, Config.cutoffI+Config.cutoffG)
 		const replaceArgReg = new RegExp(Config.replaceArg, 'g')
 		const beReplaceArgReg = new RegExp(Config.beReplaceArg, 'g')
 		
 		// tab1
-		let dHtml = oText.replace(cutoffReg, (m)=>`<span class='cutoff'>${m}</span>`)
-		// let dHtml = oText.replace(cutoffReg, '<span class="cutoff">$1</span>')
-		let ra2 = Config.replaceArg2 || '$&'
-		dHtml = dHtml.replace(replaceArgReg, '<span class="replacefrom">'+ ra2 +'</span>')
-		// dHtml = dHtml.replace(replaceArgReg, (m)=>`<span class='replacefrom'>${m}</span>`)
-		dHtml = dHtml.replace(beReplaceArgReg, (m)=>`<mark>${m}</mark>`) 
-		dHtml = dHtml.replace(/\n/g, '<br>')
-		$('#outTab1 .content').html(dHtml)
+		// $('#outTab1 .content').html(dHtml)
+		let matchHtml = RegExpUtils.getMatchWarpHtml(cutoffReg, oText, '<span class="cutoff">', '</span>').join('')
+		matchHtml = RegExpUtils.getMatchWarpHtml(replaceArgReg, matchHtml, '<span class="replacefrom">', '</span>').join('')
+		matchHtml = RegExpUtils.getMatchWarpHtml(beReplaceArgReg, matchHtml, '<span class="replaceto">', '</span>').join('')
+		$('.hid-inputview').html(matchHtml)
+
 		
 		// tab2
 		let replText = []
-		$('#outTab1').find('.replacefrom').each((i, e) => replText.push(e.innerText))
-		console.log(replText)
-		console.log(oText.match(beReplaceArgReg))
-		console.log(oText.replace(cutoffReg, ''))
+		let ra2 = Config.replaceArg2 || '$&'
+		$('.hid-inputview').find('.replacefrom').each((i, e) => replText.push(e.innerText.replace(replaceArgReg, ra2)))
 		let dText = oText.replace(cutoffReg, '')
 		for (let i = 0; i < replText.length; i++) {
-			dText = dText.replace(new RegExp(Config.beReplaceArg), `<mark>${replText[i]}</mark>`)
+			dText = dText.replace(new RegExp(Config.beReplaceArg), `<span class="replaceto">${replText[i]}</span>`)
 		}
 		const sm = SqlModUtil.parse(dText)
 		const smf = sm.formatHTML()
