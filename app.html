@@ -23,7 +23,7 @@
 			<div class="form-group">
 				<div class="input-group">
 					<div class="input-group-addon" style="background-color: #FFA;">替换参数正则</div>
-					<input type="text" id="replaceArg" value="([^\s]+)(\(String\))" style="width:280px;">
+					<input type="text" id="replaceArg" value="([^\s]+)(\(String\)|\(Integer\))" style="width:280px;">
 					<input type="text" id="replaceArg2" value="'$1'" style="width:60px;" placeholder="匹配子项($1,$2,...)" title="匹配子项($1,$2,...)">
 				</div>
 			</div>&emsp;
@@ -48,27 +48,40 @@
 		&nbsp;
 		<div class="" id="right">
 			<ul class="nav nav-tabs" role="tablist" id="outTab">
-				<!-- <li role="presentation">
-					<a href="#outTab1" aria-controls="tab1" id="" data-toggle="tab">正则预览</a>
-				</li> -->
+				<li role="presentation">
+					<a href="#outTab1" aria-controls="tab1" id="" data-toggle="tab">处理结果</a>
+				</li>
 				<li role="presentation" class="active">
-					<a href="#outTab2" aria-controls="tab2" id="" data-toggle="tab">处理结果</a>
+					<a href="#outTab2" aria-controls="tab2" id="" data-toggle="tab">处理结果&美化(test)</a>
 				</li>
 				<li role="presentation">
-					<a href="#outTab3" aria-controls="tab3" id="" data-toggle="tab">...</a>
+					<a href="#outTab3" aria-controls="tab3" id="" data-toggle="tab">hey you</a>
 				</li>
 			</ul>
 			<div class="tab-content">
-				<!-- <div role="tabpanel" class="tab-pane" id="outTab1">
+				<div role="tabpanel" class="tab-pane" id="outTab1">
 					<p class="content"></p>
-				</div> -->
+				</div>
 				<div role="tabpanel" class="tab-pane active" id="outTab2">
 					<pre class="content" id="outputArea"></pre>
 					<button id="btn_copy">复制结果</button>
 					<textarea id="outputArea_hide" cols="0" rows="0" style="width:0;height:0;left: -20px;position: relative;z-index:-100;"></textarea>
 				</div>
 				<div role="tabpanel" class="tab-pane" id="outTab3">
-					<p class="content"><span class="text-info">没有了呦~ ┑(￣Д ￣)┍</span></p>
+					<p class="content">
+						<strong>想说</strong><br>
+						You know what，造这个的初衷是想从mybatis的运行日志里提取出sql信息然后处理成可执行的sql。
+					</p>
+					<p class="content">
+						完成了之后又想，能不能把处理结果格式化一下？然后喜忧参半的事情粗线了，先说忧：几经求索后发现这件事并不简单，因为你想让计算机知道文本在哪些地方缩进、突出显示，就得告诉她一段文本里各个部分是干什么用的，这就涉及到了词法\语法解析、AST（抽象语法树）的构建、编译原理等等知识……而且要想做好，就得兼容各个数据库的方言，前端也没有像样的如Lex&Yacc这样的模板编译器，综上，这是件巨大的工程。还有一件令人沮丧的事，就是我找到了一个eclipse插件，叫<a href="https://github.com/mybatis/mybatipse" target="_blank">mybatipse</a>，它有很多强大的功能，其中就包括我要解决的初始问题，基于IDE插件的优势，使用起来方便得多……推荐大家使用o(TヘTo)
+					</p>
+					<p class="content">
+						喜的是，在求索的过程中，学习到了好多数据结构、算法与编译的知识，也写了些实(hen)验(bai)性(chi)的代码，每次都在另起炉灶中有新感悟，痛苦折腾并快乐着，有时能沉浸在一个问题里，忘记时间与周遭，这种感觉很令人舒适，若一直能这样单纯地活着，不失为一件幸事。
+					</p>
+					<p class="content">
+						<strong>展望</strong><br>
+						未来会继续耕耘，但鄙人很懒，下次更新不知是啥时候。未来有可能借助Druid框架里的sqlParse在后台解析，当然若能全在前端处理更好，前提是我能写出真正意义上的sqlParse。
+					</p>
 				</div>
 			</div>
 		</div>
@@ -133,7 +146,9 @@
 		for (let i = 0; i < replText.length; i++) {
 			dText = dText.replace(new RegExp(Config.beReplaceArg), `<span class="replaceto">${replText[i]}</span>`)
 		}
-		const sm = SqlModUtil.parse(dText)
+		const sql = SqlModUtil.setParam(dText)
+		$('#outTab1 .content').html(sql)
+		const sm = SqlModUtil.parse(sql)
 		const smf = sm.formatHTML()
 		$('#outTab2 .content').html(smf)
 	})

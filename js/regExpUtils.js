@@ -20,7 +20,7 @@ class RegExpUtils {
         const rs = RegExpUtils.getMatchIndex(regExp, str)
         const strArr = str.split('')
         for (let i = 0; i < rs.length; i++) {
-            const r = rs[i];
+            const r = rs[i]
             strArr[r[0]] = warpHtml + strArr[r[0]]
             strArr[r[1]] = strArr[r[1]] + warpHtmlEnd
         }

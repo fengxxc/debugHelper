@@ -234,12 +234,17 @@ class SelectSqlMod {
 }
 
 class SqlModUtil {
-    static parse(sql) {
+    static setParam(sql) {
         // const SPL_KEY = '^v^'
         // 字符串预处理
         sql = sql.replace(/^\s\s*/, '').replace(/\s\s*$/, '') // 去掉首尾空格
         sql = sql.replace(/(\s+|\n+)/g, " ") // 多个空格或换行，替换成一个空格
         console.log(sql)
+        return sql
+    }
+
+    static parse(sql) {
+        
         const keyWordReg = `(SELECT
             |\\s+FROM
             |\\s+INNER\\s+JOIN
@@ -263,7 +268,7 @@ class SqlModUtil {
         let sqlarr = sql.split(new RegExp(keyWordReg, 'i'))
             .filter(s => !(s == null || s == '' || s == ' '))
             .map(s => s.trim())
-        console.log(sqlarr)
+        // console.log(sqlarr)
         const sqlM = SqlModUtil._parse(sqlarr)
         return new SelectSqlMod(sqlM)
     }
