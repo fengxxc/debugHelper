@@ -37,7 +37,6 @@ class SelectSqlMod {
 
     formatHTML() {
         let html = []
-        console.log(this.oSelectJsonArr)
         this._formatHTML(this.oSelectJsonArr, html, 0)
         return html.join('')
     }
@@ -239,12 +238,11 @@ class SqlModUtil {
         // 字符串预处理
         sql = sql.replace(/^\s\s*/, '').replace(/\s\s*$/, '') // 去掉首尾空格
         sql = sql.replace(/(\s+|\n+)/g, " ") // 多个空格或换行，替换成一个空格
-        console.log(sql)
         return sql
     }
 
     static parse(sql) {
-        
+
         const keyWordReg = `(SELECT
             |\\s+FROM
             |\\s+INNER\\s+JOIN

@@ -59,13 +59,13 @@
 				</li>
 			</ul>
 			<div class="tab-content">
-				<div role="tabpanel" class="tab-pane" id="outTab1">
-					<p class="content"></p>
+				<div role="tabpanel" class="tab-pane out" id="outTab1">
+					<p class="content" id="outputArea1"></p>
 				</div>
-				<div role="tabpanel" class="tab-pane active" id="outTab2">
-					<pre class="content" id="outputArea"></pre>
-					<button id="btn_copy">复制结果</button>
-					<textarea id="outputArea_hide" cols="0" rows="0" style="width:0;height:0;left: -20px;position: relative;z-index:-100;"></textarea>
+				<div role="tabpanel" class="tab-pane out active" id="outTab2">
+					<pre class="content" id="outputArea2"></pre>
+					
+					
 				</div>
 				<div role="tabpanel" class="tab-pane" id="outTab3">
 					<p class="content">
@@ -83,6 +83,8 @@
 						未来会继续耕耘，但鄙人很懒，下次更新不知是啥时候。未来有可能借助Druid框架里的sqlParse在后台解析，当然若能全在前端处理更好，前提是我能写出真正意义上的sqlParse。
 					</p>
 				</div>
+				<textarea id="clipboardTemp" cols="0" rows="0" style="width:0;height:0;left: 20px;position: relative;z-index:-100;"></textarea>
+				<button id="btn_copy">复制结果</button>
 			</div>
 		</div>
 		<a href="https://github.com/fengxxc/debugHelper" target="_blank"><img style="position: absolute; top: 0; right: 0; border: 0; transform: scale(.7); transform-origin: top right; z-index: 2;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
@@ -153,17 +155,19 @@
 		$('#outTab2 .content').html(smf)
 	})
 
-	const outputArea_hide = document.getElementById('outputArea_hide');
-	const outputArea = document.getElementById('outputArea');
+	const clipboardTemp = document.getElementById('clipboardTemp');
 	// copy到剪贴板
-	function copySql() {
-		if (outputArea.innerText == '') {
+	const copySql2Clipboard = () => {
+		const outputArea = $('.tab-pane.out.active .content')
+		if (outputArea.length == 0) return;
+		const output = outputArea[0].innerText;
+		if (output == '') {
 			alert("啥也没有你让我复制个P丫 o(ﾟДﾟ)っ！"); 
 			return;
 		}
 		try {
-			outputArea_hide.value = outputArea.innerText;
-			outputArea_hide.select();
+			clipboardTemp.value = output;
+			clipboardTemp.select();
 			document.execCommand("copy",false,null);
 			alert("已复制到剪贴板 Ψ(￣∀￣)Ψ")
 		} catch(err) {
@@ -171,7 +175,7 @@
 		}
 	}
 	$('#btn_copy').on('click', function () {
-		copySql()
+		copySql2Clipboard()
 	})
 	pageInit()
 // -------------------------------------------------------------------------------------------------
